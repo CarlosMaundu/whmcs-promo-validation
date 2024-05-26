@@ -17,7 +17,7 @@
 
 use WHMCS\Database\Capsule;
 
-define('PROMO_TRIAL_PRODUCT_ID', 49); // Insert Actual Product ID here. 
+define('PROMO_TRIAL_PRODUCT_ID', '<YOUR_PRODUCT_ID>'); // Insert Actual Product ID here. 
 define('PROMO_TEXT_DISALLOWED', 'You must apply a promo code to checkout with a trial product.'); // Error message for missing promo code
 define('PROMO_TEXT_REQUIRE_PRODUCT', 'You cannot use a promo code for this trial product again.'); // Error message for reusing promo code
 
