@@ -1,29 +1,26 @@
 <?php
 
+/**
+ * Promo Code Validation Tests
+ * 
+ * Author: Carlos Maundu
+ */
+
 use PHPUnit\Framework\TestCase;
-use WHMCS\Database\Capsule;
+use Mockery as m;
+require 'vendor/autoload.php';
 
 class PromoCodeValidationTest extends TestCase
 {
     protected function setUp(): void
     {
-        // Set up the database connection
-        Capsule::schema()->create('tblhosting', function ($table) {
-            $table->increments('id');
-            $table->integer('userid');
-            $table->integer('packageid');
-            $table->string('domainstatus');
-            $table->string('email')->nullable();
-        });
-
-        Capsule::table('tblhosting')->insert([
-            ['userid' => 1, 'packageid' => TRIAL_PRODUCT_ID, 'domainstatus' => 'Active'],
-            ['userid' => 2, 'packageid' => TRIAL_PRODUCT_ID, 'domainstatus' => 'Cancelled'],
-        ]);
-
+        // Mock the Capsule class and its methods
+        $this->capsule = m::mock('alias:WHMCS\Database\Capsule');
+        
+        // Mock session data
         $_SESSION = [
             'cart' => [
-                'products' => [['pid' => TRIAL_PRODUCT_ID]],
+                'products' => [['pid' => PROMO_TRIAL_PRODUCT_ID]],
                 'promo' => 'PROMO2023'
             ]
         ];
@@ -31,8 +28,8 @@ class PromoCodeValidationTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Tear down the database
-        Capsule::schema()->drop('tblhosting');
+        // Close mockery
+        m::close();
     }
 
     public function testUserWithExistingTrialProduct()
@@ -40,8 +37,12 @@ class PromoCodeValidationTest extends TestCase
         $_POST['promocode'] = 'PROMO2023';
         $_POST['email'] = 'test@example.com';
 
+        // Set up the expectation for the Capsule mock
+        $this->capsule->shouldReceive('table->where->where->whereIn->exists')
+            ->andReturn(true);
+
         $result = add_hook('ShoppingCartValidateCheckout', 1, function ($vars) {
-            $trialProductId = TRIAL_PRODUCT_ID;
+            $trialProductId = PROMO_TRIAL_PRODUCT_ID;
             $promoCodeApplied = !empty($vars['promocode']);
             $userId = 1; // Simulating a logged-in user with ID 1
 
@@ -54,11 +55,11 @@ class PromoCodeValidationTest extends TestCase
                         ->exists();
 
                     if ($hasExistingTrialProduct) {
-                        return kt_textRequireProduct;
+                        return PROMO_TEXT_REQUIRE_PRODUCT;
                     }
 
                     if (!$promoCodeApplied) {
-                        return kt_textDisallowed;
+                        return PROMO_TEXT_DISALLOWED;
                     }
                 }
             }
@@ -66,7 +67,7 @@ class PromoCodeValidationTest extends TestCase
             return '';
         });
 
-        $this->assertEquals(kt_textRequireProduct, $result);
+        $this->assertEquals(PROMO_TEXT_REQUIRE_PRODUCT, $result);
     }
 
     public function testUserWithoutExistingTrialProduct()
@@ -74,8 +75,12 @@ class PromoCodeValidationTest extends TestCase
         $_POST['promocode'] = 'PROMO2023';
         $_POST['email'] = 'newuser@example.com';
 
+        // Set up the expectation for the Capsule mock
+        $this->capsule->shouldReceive('table->where->where->whereIn->exists')
+            ->andReturn(false);
+
         $result = add_hook('ShoppingCartValidateCheckout', 1, function ($vars) {
-            $trialProductId = TRIAL_PRODUCT_ID;
+            $trialProductId = PROMO_TRIAL_PRODUCT_ID;
             $promoCodeApplied = !empty($vars['promocode']);
             $userId = 3; // Simulating a new user with ID 3
 
@@ -88,11 +93,11 @@ class PromoCodeValidationTest extends TestCase
                         ->exists();
 
                     if ($hasExistingTrialProduct) {
-                        return kt_textRequireProduct;
+                        return PROMO_TEXT_REQUIRE_PRODUCT;
                     }
 
                     if (!$promoCodeApplied) {
-                        return kt_textDisallowed;
+                        return PROMO_TEXT_DISALLOWED;
                     }
                 }
             }
@@ -108,8 +113,12 @@ class PromoCodeValidationTest extends TestCase
         $_POST['promocode'] = '';
         $_POST['email'] = 'newuser@example.com';
 
+        // Set up the expectation for the Capsule mock
+        $this->capsule->shouldReceive('table->where->where->whereIn->exists')
+            ->andReturn(false);
+
         $result = add_hook('ShoppingCartValidateCheckout', 1, function ($vars) {
-            $trialProductId = TRIAL_PRODUCT_ID;
+            $trialProductId = PROMO_TRIAL_PRODUCT_ID;
             $promoCodeApplied = !empty($vars['promocode']);
             $userId = 3; // Simulating a new user with ID 3
 
@@ -122,11 +131,11 @@ class PromoCodeValidationTest extends TestCase
                         ->exists();
 
                     if ($hasExistingTrialProduct) {
-                        return kt_textRequireProduct;
+                        return PROMO_TEXT_REQUIRE_PRODUCT;
                     }
 
                     if (!$promoCodeApplied) {
-                        return kt_textDisallowed;
+                        return PROMO_TEXT_DISALLOWED;
                     }
                 }
             }
@@ -134,6 +143,6 @@ class PromoCodeValidationTest extends TestCase
             return '';
         });
 
-        $this->assertEquals(kt_textDisallowed, $result);
+        $this->assertEquals(PROMO_TEXT_DISALLOWED, $result);
     }
 }

@@ -6,9 +6,14 @@ This project provides a custom WHMCS hook to validate promo codes during the che
 
 ## Use Cases
 
-- Preventing users from reusing promo codes for trial products.
-- Enforcing promo code application for specific products during checkout.
-- Handling validation for both logged-in and guest users.
+- **Software Trials**: Ensure users apply promo codes to access trial versions of software.
+- **Limited Time Offers**: Restrict users from reusing promo codes for limited time offers.
+- **Marketing Campaigns**: Validate promo codes used in marketing campaigns.
+
+## Usage
+
+1. Replace `<YOUR_PRODUCT_ID>` in `promoValidation.php` with your actual trial product ID.
+2. Place `promoValidation.php` in `includes/hooks/`.
 
 ### Key Features
 
@@ -22,5 +27,5 @@ This project provides a custom WHMCS hook to validate promo codes during the che
 1. **Clone the repository:**
 
    ```sh
-   git clone https://github.com/yourusername/whmcs-promo-validation.git
+   git clone https://github.com/CarlosMaundu/whmcs-promo-validation.git
    cd whmcs-promo-validation

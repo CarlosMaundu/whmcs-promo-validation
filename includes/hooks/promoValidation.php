@@ -1,11 +1,25 @@
+/**
+ * /includes/hooks/promoValidation.php
+ * Author: Carlos Maundu
+ *
+ * This file contains hooks and functions related to promo code validation and enforcement for trial products in WHMCS.
+ *
+ * Constants:
+ * - PROMO_TRIAL_PRODUCT_I: The ID of the trial product. Replace with the actual product ID.
+ * - PROMO_TEXT_DISALLOWED: The error message to display when a promo code is missing for the trial product.
+ * - PROMO_TEXT_REQUIRE_PRODUCT: The error message to display when a promo code is reused for the trial product.
+ *
+ * Hooks:
+ * - ShoppingCartValidateCheckout: Hook to check if the user has an existing trial product and enforce promo code application.
+ * - AdminAreaHeadOutput: Hook to customize the admin area by highlighting and labeling the trial product.
+ */
 <?php
 
 use WHMCS\Database\Capsule;
 
-define('TRIAL_PRODUCT_ID', '<YOUR_PRODUCT_ID>'); // Insert Actual Product ID here. 
-define('kt_promptRemoval', 'modal'); // Choose one of the following options: "bootstrap-alert", "modal", "js-alert"
-define('kt_textDisallowed', 'You must apply a promo code to checkout with a trial product.'); // Error message for missing promo code
-define('kt_textRequireProduct', 'You cannot use a promo code for this trial product again.'); // Error message for reusing promo code
+define('PROMO_TRIAL_PRODUCT_ID', 49); // Insert Actual Product ID here. 
+define('PROMO_TEXT_DISALLOWED', 'You must apply a promo code to checkout with a trial product.'); // Error message for missing promo code
+define('PROMO_TEXT_REQUIRE_PRODUCT', 'You cannot use a promo code for this trial product again.'); // Error message for reusing promo code
 
 // Hook to check if the user has an existing trial product and enforce promo code application
 add_hook('ShoppingCartValidateCheckout', 1, function($vars) {
@@ -18,30 +32,30 @@ add_hook('ShoppingCartValidateCheckout', 1, function($vars) {
     $cartProducts = isset($_SESSION['cart']['products']) ? $_SESSION['cart']['products'] : [];
 
     foreach ($cartProducts as $product) {
-        if ($product['pid'] == TRIAL_PRODUCT_ID) {
+        if ($product['pid'] == PROMO_TRIAL_PRODUCT_ID) {
             // Check if the user has already used the trial product
             $usedTrialProduct = false;
             if ($userId) {
                 $usedTrialProduct = Capsule::table('tblhosting')
                     ->where('userid', $userId)
-                    ->where('packageid', TRIAL_PRODUCT_ID)
+                    ->where('packageid', PROMO_TRIAL_PRODUCT_ID)
                     ->whereIn('domainstatus', ['Pending', 'Active', 'Suspended', 'Terminated', 'Cancelled', 'Fraud', 'Completed'])
                     ->exists();
             } elseif ($email) {
                 $usedTrialProduct = Capsule::table('tblhosting')
                     ->where('domainstatus', '!=', 'Cancelled')
-                    ->where('packageid', TRIAL_PRODUCT_ID)
+                    ->where('packageid', PROMO_TRIAL_PRODUCT_ID)
                     ->where('email', $email)
                     ->exists();
             }
 
             if ($usedTrialProduct) {
-                return kt_textRequireProduct;
+                return PROMO_TEXT_REQUIRE_PRODUCT;
             }
 
             // Enforce promo code application
             if (!$promoCodeApplied) {
-                return kt_textDisallowed;
+                return PROMO_TEXT_DISALLOWED;
             }
         }
     }
@@ -52,7 +66,7 @@ add_hook('ShoppingCartValidateCheckout', 1, function($vars) {
 // Admin Area Customization: Highlight and label the trial product
 add_hook('AdminAreaHeadOutput', 1, function($vars) {
     if ($vars['filename'] == 'configproducts') {
-        $objPrododucts = json_encode([TRIAL_PRODUCT_ID]);
+        $objPrododucts = json_encode([PROMO_TRIAL_PRODUCT_ID]);
 
         return <<<HTML
 <script type="text/javascript">
